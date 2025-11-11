@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1762769948065,
+      "tag": "0000_slimy_aaron_stack",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1762770048880,
+      "tag": "0001_workable_night_nurse",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1762773271625,
+      "tag": "0002_gifted_rhino",
+      "breakpoints": true
+    }
+  ]
+}

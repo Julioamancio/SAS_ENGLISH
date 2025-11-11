@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="16" fill="#3B82F6"/>
+  <path d="M32 48C32 44.6863 34.6863 42 38 42H54C57.3137 42 60 44.6863 60 48V54C60 57.3137 57.3137 60 54 60H38C34.6863 60 32 57.3137 32 54V48Z" fill="white"/>
+  <path d="M68 48C68 44.6863 70.6863 42 74 42H90C93.3137 42 96 44.6863 96 48V54C96 57.3137 93.3137 60 90 60H74C70.6863 60 68 57.3137 68 54V48Z" fill="white"/>
+  <path d="M32 74C32 70.6863 34.6863 68 38 68H54C57.3137 68 60 70.6863 60 74V80C60 83.3137 57.3137 86 54 86H38C34.6863 86 32 83.3137 32 80V74Z" fill="white"/>
+  <path d="M68 74C68 70.6863 70.6863 68 74 68H90C93.3137 68 96 70.6863 96 74V80C96 83.3137 93.3137 86 90 86H74C70.6863 86 68 83.3137 68 80V74Z" fill="white"/>
+  <text x="64" y="108" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">SAS</text>
+</svg>
