@@ -1,0 +1,541 @@
+{% extends "base.html" %}
+
+{% block title %}Turmas - English SAS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Gerenciamento de Turmas</h1>
+    <button class="btn btn-primary" onclick="showModal('turma-modal')">
+        <span class="icon">+</span>
+        Nova Turma
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Lista de Turmas</h2>
+        <div class="filters">
+            <select id="ano-filter" onchange="filterTurmas()">
+                <option value="">Todos os Anos</option>
+                <option value="1">1º Ano</option>
+                <option value="2">2º Ano</option>
+                <option value="3">3º Ano</option>
+            </select>
+            <select id="professor-filter" onchange="filterTurmas()">
+                <option value="">Todos os Professores</option>
+                {% for professor in professores %}
+                <option value="{{ professor.id }}">{{ professor.nome }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="table-container">
+        <table id="turmas-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Ano</th>
+                    <th>Professor</th>
+                    <th>Alunos</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="turmas-tbody">
+                <!-- Turmas will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Turma Modal -->
+<div id="turma-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="turma-modal-title">Nova Turma</h3>
+            <button class="modal-close" onclick="hideModal('turma-modal')">&times;</button>
+        </div>
+        <form id="turma-form" onsubmit="saveTurma(event)">
+            <div class="form-group">
+                <label for="turma-nome">Nome da Turma *</label>
+                <input type="text" id="turma-nome" name="nome" required 
+                       pattern="[A-Za-z0-9\s]+" 
+                       title="Apenas letras, números e espaços são permitidos">
+            </div>
+            <div class="form-group">
+                <label for="turma-ano">Ano *</label>
+                <select id="turma-ano" name="ano" required>
+                    <option value="">Selecione o ano</option>
+                    <option value="1">1º Ano</option>
+                    <option value="2">2º Ano</option>
+                    <option value="3">3º Ano</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="turma-professor">Professor *</label>
+                <select id="turma-professor" name="professor_id" required>
+                    <option value="">Selecione o professor</option>
+                    {% for professor in professores %}
+                    <option value="{{ professor.id }}">{{ professor.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="turma-descricao">Descrição</label>
+                <textarea id="turma-descricao" name="descricao" rows="3"
+                          placeholder="Descrição opcional da turma..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('turma-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Alunos Modal -->
+<div id="alunos-modal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="alunos-modal-title">Gerenciar Alunos</h3>
+            <button class="modal-close" onclick="hideModal('alunos-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="page-header">
+                <button class="btn btn-primary" onclick="showModal('add-aluno-modal')">
+                    <span class="icon">+</span>
+                    Adicionar Aluno
+                </button>
+                <button class="btn btn-secondary" onclick="showModal('transfer-aluno-modal')">
+                    <span class="icon">↔</span>
+                    Transferir Aluno
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="alunos-turma-table" class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Matrícula</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alunos-turma-tbody">
+                        <!-- Alunos will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Aluno Modal -->
+<div id="add-aluno-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Adicionar Aluno</h3>
+            <button class="modal-close" onclick="hideModal('add-aluno-modal')">&times;</button>
+        </div>
+        <form id="add-aluno-form" onsubmit="addAlunoToTurma(event)">
+            <div class="form-group">
+                <label for="aluno-search">Buscar Aluno *</label>
+                <input type="text" id="aluno-search" placeholder="Digite o nome ou matrícula..."
+                       oninput="searchAlunos(this.value)">
+                <div id="aluno-search-results" class="search-results"></div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('add-aluno-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Transfer Aluno Modal -->
+<div id="transfer-aluno-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Transferir Aluno</h3>
+            <button class="modal-close" onclick="hideModal('transfer-aluno-modal')">&times;</button>
+        </div>
+        <form id="transfer-aluno-form" onsubmit="transferAluno(event)">
+            <div class="form-group">
+                <label for="transfer-aluno-search">Buscar Aluno *</label>
+                <input type="text" id="transfer-aluno-search" placeholder="Digite o nome ou matrícula..."
+                       oninput="searchAlunosForTransfer(this.value)">
+                <div id="transfer-aluno-search-results" class="search-results"></div>
+            </div>
+            <div class="form-group">
+                <label for="transfer-turma-destino">Turma de Destino *</label>
+                <select id="transfer-turma-destino" name="turma_destino_id" required>
+                    <option value="">Selecione a turma de destino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="transfer-motivo">Motivo da Transferência</label>
+                <textarea id="transfer-motivo" name="motivo" rows="2"
+                          placeholder="Motivo opcional da transferência..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('transfer-aluno-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Transferir</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentTurmaId = null;
+let currentEditingId = null;
+
+// Load turmas on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadTurmas();
+    loadProfessoresForSelects();
+});
+
+async function loadTurmas() {
+    try {
+        const response = await apiCall('/api/turmas');
+        const turmas = response.turmas || [];
+        
+        const tbody = document.getElementById('turmas-tbody');
+        tbody.innerHTML = '';
+        
+        turmas.forEach(turma => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${escapeHtml(turma.nome)}</td>
+                <td>${turma.ano}º Ano</td>
+                <td>${escapeHtml(turma.professor_nome)}</td>
+                <td>${turma.alunos_count || 0}</td>
+                <td>
+                    <span class="status ${turma.status}">
+                        ${turma.status === 'ativa' ? 'Ativa' : 'Inativa'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="manageAlunos(${turma.id})" 
+                            title="Gerenciar Alunos">
+                        <span class="icon">👥</span>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="editTurma(${turma.id})" 
+                            title="Editar">
+                        <span class="icon">✏️</span>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTurma(${turma.id})" 
+                            title="Excluir">
+                        <span class="icon">🗑️</span>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        showNotification('Erro ao carregar turmas: ' + error.message, 'error');
+    }
+}
+
+async function loadProfessoresForSelects() {
+    try {
+        const response = await apiCall('/api/professores');
+        const professores = response.professores || [];
+        
+        // Update transfer modal turma select
+        const turmaDestinoSelect = document.getElementById('transfer-turma-destino');
+        turmaDestinoSelect.innerHTML = '<option value="">Selecione a turma de destino</option>';
+        
+        professores.forEach(professor => {
+            // Turma selects are already populated by template
+        });
+    } catch (error) {
+        console.error('Erro ao carregar professores:', error);
+    }
+}
+
+function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function hideModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    
+    // Clear forms
+    const form = document.querySelector(`#${modalId} form`);
+    if (form) form.reset();
+    
+    // Clear search results
+    const searchResults = document.querySelector(`#${modalId} .search-results`);
+    if (searchResults) searchResults.innerHTML = '';
+}
+
+async function saveTurma(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const turmaData = Object.fromEntries(formData);
+    
+    try {
+        const method = currentEditingId ? 'PUT' : 'POST';
+        const url = currentEditingId ? `/api/turmas/${currentEditingId}` : '/api/turmas';
+        
+        await apiCall(url, {
+            method: method,
+            body: JSON.stringify(turmaData)
+        });
+        
+        showNotification(currentEditingId ? 'Turma atualizada com sucesso!' : 'Turma criada com sucesso!', 'success');
+        hideModal('turma-modal');
+        loadTurmas();
+        currentEditingId = null;
+    } catch (error) {
+        showNotification('Erro ao salvar turma: ' + error.message, 'error');
+    }
+}
+
+async function editTurma(id) {
+    try {
+        const response = await apiCall(`/api/turmas/${id}`);
+        const turma = response.turma;
+        
+        document.getElementById('turma-modal-title').textContent = 'Editar Turma';
+        document.getElementById('turma-nome').value = turma.nome;
+        document.getElementById('turma-ano').value = turma.ano;
+        document.getElementById('turma-professor').value = turma.professor_id;
+        document.getElementById('turma-descricao').value = turma.descricao || '';
+        
+        currentEditingId = id;
+        showModal('turma-modal');
+    } catch (error) {
+        showNotification('Erro ao carregar turma: ' + error.message, 'error');
+    }
+}
+
+async function deleteTurma(id) {
+    if (!confirm('Tem certeza que deseja excluir esta turma?')) return;
+    
+    try {
+        await apiCall(`/api/turmas/${id}`, {
+            method: 'DELETE'
+        });
+        
+        showNotification('Turma excluída com sucesso!', 'success');
+        loadTurmas();
+    } catch (error) {
+        showNotification('Erro ao excluir turma: ' + error.message, 'error');
+    }
+}
+
+async function manageAlunos(turmaId) {
+    currentTurmaId = turmaId;
+    
+    try {
+        const response = await apiCall(`/api/turmas/${turmaId}/alunos`);
+        const alunos = response.alunos || [];
+        
+        const tbody = document.getElementById('alunos-turma-tbody');
+        tbody.innerHTML = '';
+        
+        alunos.forEach(aluno => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${escapeHtml(aluno.nome)}</td>
+                <td>${escapeHtml(aluno.matricula)}</td>
+                <td>${escapeHtml(aluno.email)}</td>
+                <td>
+                    <span class="status ${aluno.status}">
+                        ${aluno.status === 'ativo' ? 'Ativo' : 'Inativo'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="removeAlunoFromTurma(${aluno.id})" 
+                            title="Remover da Turma">
+                        <span class="icon">❌</span>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        document.getElementById('alunos-modal-title').textContent = 
+            `Gerenciar Alunos - ${response.turma_nome}`;
+        showModal('alunos-modal');
+    } catch (error) {
+        showNotification('Erro ao carregar alunos: ' + error.message, 'error');
+    }
+}
+
+async function searchAlunos(query) {
+    if (query.length < 2) {
+        document.getElementById('aluno-search-results').innerHTML = '';
+        return;
+    }
+    
+    try {
+        const response = await apiCall(`/api/alunos/search?q=${encodeURIComponent(query)}`);
+        const alunos = response.alunos || [];
+        
+        const resultsDiv = document.getElementById('aluno-search-results');
+        resultsDiv.innerHTML = '';
+        
+        alunos.forEach(aluno => {
+            const div = document.createElement('div');
+            div.className = 'search-result-item';
+            div.innerHTML = `
+                <strong>${escapeHtml(aluno.nome)}</strong><br>
+                <small>Matrícula: ${escapeHtml(aluno.matricula)}</small>
+            `;
+            div.onclick = () => selectAlunoForTurma(aluno);
+            resultsDiv.appendChild(div);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar alunos:', error);
+    }
+}
+
+let selectedAlunoForTurma = null;
+
+function selectAlunoForTurma(aluno) {
+    selectedAlunoForTurma = aluno;
+    document.getElementById('aluno-search').value = aluno.nome;
+    document.getElementById('aluno-search-results').innerHTML = '';
+}
+
+async function addAlunoToTurma(event) {
+    event.preventDefault();
+    
+    if (!selectedAlunoForTurma) {
+        showNotification('Por favor, selecione um aluno', 'error');
+        return;
+    }
+    
+    try {
+        await apiCall(`/api/turmas/${currentTurmaId}/alunos`, {
+            method: 'POST',
+            body: JSON.stringify({
+                aluno_id: selectedAlunoForTurma.id
+            })
+        });
+        
+        showNotification('Aluno adicionado com sucesso!', 'success');
+        hideModal('add-aluno-modal');
+        manageAlunos(currentTurmaId);
+        selectedAlunoForTurma = null;
+    } catch (error) {
+        showNotification('Erro ao adicionar aluno: ' + error.message, 'error');
+    }
+}
+
+async function removeAlunoFromTurma(alunoId) {
+    if (!confirm('Tem certeza que deseja remover este aluno da turma?')) return;
+    
+    try {
+        await apiCall(`/api/turmas/${currentTurmaId}/alunos/${alunoId}`, {
+            method: 'DELETE'
+        });
+        
+        showNotification('Aluno removido com sucesso!', 'success');
+        manageAlunos(currentTurmaId);
+    } catch (error) {
+        showNotification('Erro ao remover aluno: ' + error.message, 'error');
+    }
+}
+
+async function searchAlunosForTransfer(query) {
+    if (query.length < 2) {
+        document.getElementById('transfer-aluno-search-results').innerHTML = '';
+        return;
+    }
+    
+    try {
+        const response = await apiCall(`/api/alunos/search?q=${encodeURIComponent(query)}`);
+        const alunos = response.alunos || [];
+        
+        const resultsDiv = document.getElementById('transfer-aluno-search-results');
+        resultsDiv.innerHTML = '';
+        
+        alunos.forEach(aluno => {
+            const div = document.createElement('div');
+            div.className = 'search-result-item';
+            div.innerHTML = `
+                <strong>${escapeHtml(aluno.nome)}</strong><br>
+                <small>Matrícula: ${escapeHtml(aluno.matricula)} - Turma: ${escapeHtml(aluno.turma_nome || 'Sem turma')}</small>
+            `;
+            div.onclick = () => selectAlunoForTransfer(aluno);
+            resultsDiv.appendChild(div);
+        });
+    } catch (error) {
+        console.error('Erro ao buscar alunos:', error);
+    }
+}
+
+let selectedAlunoForTransfer = null;
+
+function selectAlunoForTransfer(aluno) {
+    selectedAlunoForTransfer = aluno;
+    document.getElementById('transfer-aluno-search').value = aluno.nome;
+    document.getElementById('transfer-aluno-search-results').innerHTML = '';
+}
+
+async function transferAluno(event) {
+    event.preventDefault();
+    
+    if (!selectedAlunoForTransfer) {
+        showNotification('Por favor, selecione um aluno', 'error');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const turmaDestinoId = formData.get('turma_destino_id');
+    const motivo = formData.get('motivo');
+    
+    try {
+        await apiCall(`/api/alunos/${selectedAlunoForTransfer.id}/transferir`, {
+            method: 'POST',
+            body: JSON.stringify({
+                turma_destino_id: parseInt(turmaDestinoId),
+                motivo: motivo
+            })
+        });
+        
+        showNotification('Aluno transferido com sucesso!', 'success');
+        hideModal('transfer-aluno-modal');
+        loadTurmas();
+        selectedAlunoForTransfer = null;
+    } catch (error) {
+        showNotification('Erro ao transferir aluno: ' + error.message, 'error');
+    }
+}
+
+function filterTurmas() {
+    const anoFilter = document.getElementById('ano-filter').value;
+    const professorFilter = document.getElementById('professor-filter').value;
+    
+    const table = document.getElementById('turmas-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.getElementsByTagName('td');
+        
+        const ano = cells[1].textContent.replace('º Ano', '');
+        const professor = cells[2].textContent;
+        
+        let showRow = true;
+        
+        if (anoFilter && ano !== anoFilter) showRow = false;
+        if (professorFilter) {
+            const professorSelect = document.getElementById('professor-filter');
+            const selectedProfessorName = professorSelect.options[professorSelect.selectedIndex].text;
+            if (professor !== selectedProfessorName) showRow = false;
+        }
+        
+        row.style.display = showRow ? '' : 'none';
+    }
+}
+</script>
+{% endblock %}

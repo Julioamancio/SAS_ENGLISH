@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import type { Express, Request, Response, NextFunction } from "express";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import * as db from "../db";
+import * as db from "../mock-db";
 import { getSessionCookieOptions } from "./cookies";
 import { ENV } from "./env";
 
@@ -108,23 +108,31 @@ export function registerAuthRoutes(app: Express) {
         return;
       }
 
+      console.log("[Auth] Attempting login for email:", email);
+
       // Get user
       const user = await db.getUserByEmail(email);
+      console.log("[Auth] User found:", user ? "Yes" : "No");
       if (!user || !user.password) {
+        console.log("[Auth] Invalid credentials - user not found or no password");
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
 
+      console.log("[Auth] Verifying password...");
       // Verify password
       const isValid = await verifyPassword(password, user.password);
+      console.log("[Auth] Password valid:", isValid);
       if (!isValid) {
         res.status(401).json({ error: "Invalid credentials" });
         return;
       }
 
+      console.log("[Auth] Updating last signed in...");
       // Update last signed in
       await db.updateUserLastSignedIn(user.id);
 
+      console.log("[Auth] Creating token...");
       // Create token
       const token = createToken({
         userId: user.id,
@@ -132,10 +140,12 @@ export function registerAuthRoutes(app: Express) {
         role: user.role,
       });
 
+      console.log("[Auth] Setting cookie...");
       // Set cookie
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
+      console.log("[Auth] Login successful!");
       res.json({
         success: true,
         user: {
@@ -147,7 +157,7 @@ export function registerAuthRoutes(app: Express) {
       });
     } catch (error) {
       console.error("[Auth] Login failed:", error);
-      res.status(500).json({ error: "Login failed" });
+      res.status(500).json({ error: "Login failed: " + (error as Error).message });
     }
   });
 

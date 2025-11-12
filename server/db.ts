@@ -1,5 +1,61 @@
 import { eq, and, desc, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+
+// Mock database implementation for development
+// Admin password: admin123 (hashed with bcrypt)
+let mockData = {
+  users: [{
+    id: 1,
+    openId: 'admin_openid',
+    name: 'Administrador',
+    email: 'admin@englishsas.com',
+    loginMethod: 'local',
+    role: 'admin',
+    password: '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // admin123 hashed
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    lastSignedIn: new Date().toISOString()
+  }],
+  professores: [{
+    id: 1,
+    userId: 1,
+    nome: 'Administrador',
+    email: 'admin@englishsas.com',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }],
+  turmas: [],
+  alunos: [],
+  matriculas: [],
+  etapas: [],
+  atividades: [],
+  notas: [],
+  feedbacks: [],
+  historicoFeedbacks: [],
+  configuracoes: [],
+  auditoria: [],
+  questoesIngles: [{
+    id: 1,
+    titulo: 'Present Simple - Basic',
+    tipo: 'grammar',
+    nivel: 'A1',
+    enunciado: 'Choose the correct verb form:',
+    texto: 'She _____ to school every day.',
+    alternativas: '["go", "goes", "going", "went"]',
+    respostaCorreta: 'goes',
+    explicacao: 'Third person singular adds -s to the verb.',
+    tempoEstimado: 30,
+    professorId: 1,
+    ativa: 1,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }],
+  bancosQuestoes: [],
+  bancoQuestoesRelacao: [],
+  atividadesQuestoes: [],
+  respostasAlunos: []
+};
+
+let nextId = 2;
 import { 
   InsertUser, 
   users, 
@@ -14,6 +70,11 @@ import {
   historicoFeedbacks,
   configuracoes,
   auditoria,
+  questoesIngles,
+  bancosQuestoes,
+  bancoQuestoesRelacao,
+  atividadesQuestoes,
+  respostasAlunos,
   Professor,
   Turma,
   Aluno,
@@ -25,20 +86,108 @@ import {
   Feedback,
   HistoricoFeedback,
   Configuracao,
-  Auditoria
+  Auditoria,
+  QuestaoIngles,
+  InsertQuestaoIngles,
+  BancoQuestoes,
+  InsertBancoQuestoes,
+  BancoQuestoesRelacao,
+  InsertBancoQuestoesRelacao,
+  AtividadeQuestoes,
+  InsertAtividadeQuestoes,
+  RespostaAluno,
+  InsertRespostaAluno
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
-    try {
-      _db = drizzle(process.env.DATABASE_URL);
-    } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
-      _db = null;
-    }
+  if (!_db) {
+    console.log("[Mock Database] Using mock database for development");
+    _db = {
+      select: () => ({
+        from: (table) => {
+          const tableName = table._.name;
+          const data = mockData[tableName] || [];
+          return {
+            where: (condition) => {
+              let results = [...data];
+              console.log("[Mock DB] Where condition:", condition);
+              if (condition && condition.op === 'eq') {
+                const [column, value] = condition.args;
+                console.log("[Mock DB] Filtering by column:", column, "value:", value);
+                console.log("[Mock DB] Available data:", results);
+                results = results.filter(row => {
+                  console.log("[Mock DB] Checking row:", row, "column value:", row[column]);
+                  return row[column] === value;
+                });
+                console.log("[Mock DB] Filtered results:", results);
+              }
+              return {
+                limit: (n) => {
+                  const limited = results.slice(0, n);
+                  console.log("[Mock DB] Limited results:", limited);
+                  return limited;
+                },
+                then: async () => {
+                  console.log("[Mock DB] Final results:", results);
+                  return results;
+                }
+              };
+            },
+            leftJoin: (otherTable, condition) => ({ where: () => ({ limit: () => [], then: async () => [] }) }),
+            innerJoin: (otherTable, condition) => ({ where: () => ({ then: async () => [] }), orderBy: () => ({ then: async () => [] }) }),
+            orderBy: (order) => ({ then: async () => data }),
+            then: async () => data
+          };
+        }
+      }),
+      insert: (table) => ({
+        values: (data) => {
+          const tableName = table._.name;
+          if (Array.isArray(data)) {
+            const results = [];
+            for (const item of data) {
+              const newItem = { ...item, id: nextId++ };
+              mockData[tableName].push(newItem);
+              results.push({ insertId: newItem.id });
+            }
+            return results;
+          } else {
+            const newItem = { ...data, id: nextId++ };
+            mockData[tableName].push(newItem);
+            return [{ insertId: newItem.id }];
+          }
+        }
+      }),
+      update: (table) => ({
+        set: (data) => ({
+          where: (condition) => {
+            const tableName = table._.name;
+            const items = mockData[tableName];
+            if (condition && condition.op === 'eq') {
+              const [column, value] = condition.args;
+              const item = items.find(row => row[column] === value);
+              if (item) {
+                Object.assign(item, data);
+              }
+            }
+            return Promise.resolve();
+          }
+        })
+      }),
+      delete: (table) => ({
+        where: (condition) => {
+          const tableName = table._.name;
+          if (condition && condition.op === 'eq') {
+            const [column, value] = condition.args;
+            mockData[tableName] = mockData[tableName].filter(row => row[column] !== value);
+          }
+          return Promise.resolve();
+        }
+      })
+    };
   }
   return _db;
 }
@@ -103,9 +252,14 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db!.insert(users).values(values as any).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    // Check if user exists
+    const existingUser = await db!.select().from(users).where(eq(users.openId, user.openId)).limit(1);
+    
+    if (existingUser.length > 0) {
+      await db!.update(users).set(updateSet).where(eq(users.openId, user.openId));
+    } else {
+      await db!.insert(users).values(values as any);
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
@@ -131,10 +285,22 @@ export async function getUserById(id: number) {
 }
 
 export async function getUserByEmail(email: string) {
+  console.log("[DB] getUserByEmail called with:", email);
   const db = await getDb();
+  console.log("[DB] Database connection:", db ? "Available" : "Not available");
   if (!db) return undefined;
-  const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  return result.length > 0 ? result[0] : undefined;
+  
+  try {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    console.log("[DB] Query result:", result);
+    console.log("[DB] Result length:", result.length);
+    const user = result.length > 0 ? result[0] : undefined;
+    console.log("[DB] Returning user:", user);
+    return user;
+  } catch (error) {
+    console.error("[DB] Error in getUserByEmail:", error);
+    return undefined;
+  }
 }
 
 export async function createUser(user: {
@@ -481,6 +647,199 @@ export async function getNotasByAlunoId(alunoId: number) {
     .where(eq(notas.alunoId, alunoId));
   
   return result;
+}
+
+// ============ ENGLISH QUESTIONS SYSTEM ============
+
+export async function getAllQuestoesIngles() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(questoesIngles).where(eq(questoesIngles.ativa, true));
+}
+
+export async function getQuestoesInglesByProfessor(professorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(questoesIngles).where(eq(questoesIngles.professorId, professorId));
+}
+
+export async function getQuestoesInglesByTipo(tipo: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(questoesIngles).where(and(eq(questoesIngles.tipo, tipo), eq(questoesIngles.ativa, true)));
+}
+
+export async function getQuestoesInglesByNivel(nivel: string) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(questoesIngles).where(and(eq(questoesIngles.nivel, nivel), eq(questoesIngles.ativa, true)));
+}
+
+export async function getQuestaoInglesById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(questoesIngles).where(eq(questoesIngles.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function createQuestaoIngles(data: InsertQuestaoIngles) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(questoesIngles).values(data);
+  return Number(result.insertId);
+}
+
+export async function updateQuestaoIngles(id: number, data: Partial<QuestaoIngles>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(questoesIngles).set(data).where(eq(questoesIngles.id, id));
+}
+
+export async function deleteQuestaoIngles(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(questoesIngles).set({ ativa: false }).where(eq(questoesIngles.id, id));
+}
+
+// Question Banks
+export async function getAllBancosQuestoes() {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(bancosQuestoes).where(eq(bancosQuestoes.ativo, true));
+}
+
+export async function getBancosQuestoesByProfessor(professorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db.select().from(bancosQuestoes).where(eq(bancosQuestoes.professorId, professorId));
+}
+
+export async function getBancoQuestoesById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  
+  const result = await db.select().from(bancosQuestoes).where(eq(bancosQuestoes.id, id)).limit(1);
+  return result[0] || null;
+}
+
+export async function createBancoQuestoes(data: InsertBancoQuestoes) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(bancosQuestoes).values(data);
+  return Number(result.insertId);
+}
+
+export async function updateBancoQuestoes(id: number, data: Partial<BancoQuestoes>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  await db.update(bancosQuestoes).set(data).where(eq(bancosQuestoes.id, id));
+}
+
+export async function addQuestaoToBanco(bancoId: number, questaoId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  try {
+    await db.insert(bancoQuestoesRelacao).values({ bancoId, questaoId });
+  } catch (error) {
+    // Ignore duplicate entries
+  }
+}
+
+export async function getQuestoesFromBanco(bancoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  const result = await db
+    .select({
+      id: questoesIngles.id,
+      titulo: questoesIngles.titulo,
+      tipo: questoesIngles.tipo,
+      nivel: questoesIngles.nivel,
+      enunciado: questoesIngles.enunciado,
+      texto: questoesIngles.texto,
+      alternativas: questoesIngles.alternativas,
+      respostaCorreta: questoesIngles.respostaCorreta,
+      explicacao: questoesIngles.explicacao,
+      tempoEstimado: questoesIngles.tempoEstimado,
+      professorId: questoesIngles.professorId,
+      createdAt: questoesIngles.createdAt,
+    })
+    .from(bancoQuestoesRelacao)
+    .innerJoin(questoesIngles, eq(bancoQuestoesRelacao.questaoId, questoesIngles.id))
+    .where(eq(bancoQuestoesRelacao.bancoId, bancoId));
+  
+  return result;
+}
+
+// Student Answers
+export async function createRespostaAluno(data: InsertRespostaAluno) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  
+  const result = await db.insert(respostasAlunos).values(data);
+  return Number(result.insertId);
+}
+
+export async function getRespostasByAluno(alunoId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select({
+      id: respostasAlunos.id,
+      questaoId: respostasAlunos.questaoId,
+      respostaSelecionada: respostasAlunos.respostaSelecionada,
+      respostaTexto: respostasAlunos.respostaTexto,
+      correta: respostasAlunos.correta,
+      tempoResposta: respostasAlunos.tempoResposta,
+      dataResposta: respostasAlunos.dataResposta,
+      questaoTitulo: questoesIngles.titulo,
+      questaoTipo: questoesIngles.tipo,
+      questaoNivel: questoesIngles.nivel,
+    })
+    .from(respostasAlunos)
+    .innerJoin(questoesIngles, eq(respostasAlunos.questaoId, questoesIngles.id))
+    .where(eq(respostasAlunos.alunoId, alunoId))
+    .orderBy(desc(respostasAlunos.dataResposta));
+}
+
+export async function getRespostasByAtividade(atividadeId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  
+  return await db
+    .select({
+      id: respostasAlunos.id,
+      alunoId: respostasAlunos.alunoId,
+      questaoId: respostasAlunos.questaoId,
+      respostaSelecionada: respostasAlunos.respostaSelecionada,
+      respostaTexto: respostasAlunos.respostaTexto,
+      correta: respostasAlunos.correta,
+      tempoResposta: respostasAlunos.tempoResposta,
+      dataResposta: respostasAlunos.dataResposta,
+      alunoNome: alunos.nome,
+      questaoTitulo: questoesIngles.titulo,
+      questaoTipo: questoesIngles.tipo,
+      questaoNivel: questoesIngles.nivel,
+    })
+    .from(respostasAlunos)
+    .innerJoin(alunos, eq(respostasAlunos.alunoId, alunos.id))
+    .innerJoin(questoesIngles, eq(respostasAlunos.questaoId, questoesIngles.id))
+    .where(eq(respostasAlunos.atividadeId, atividadeId))
+    .orderBy(desc(respostasAlunos.dataResposta));
 }
 
 // ============ FEEDBACKS ============

@@ -1,6 +1,6 @@
-# SAS English - Sistema de Gestão Escolar
+# English SAS - Sistema de Gestão Escolar com Questões de Inglês
 
-Sistema completo de gestão escolar com autenticação independente, gestão de turmas, atividades, notas, feedbacks e relatórios.
+Sistema completo de gestão escolar com autenticação independente, gestão de turmas, atividades, notas, feedbacks, relatórios e sistema de questões de inglês com níveis CEFR A1-B2+.
 
 ## 🚀 Funcionalidades
 
@@ -201,7 +201,7 @@ O sistema de autenticação funciona perfeitamente localmente e no Render.com. O
 
 ## 📄 Licença
 
-Projeto proprietário - SAS English © 2025
+Projeto proprietário - English SAS © 2025
 
 ## 👨‍💻 Suporte
 

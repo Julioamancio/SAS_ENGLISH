@@ -22,7 +22,7 @@ export async function exportarRelatorioAlunoDocx(dados: {
         children: [
           // Cabeçalho
           new Paragraph({
-            text: "SAS English - Sistema de Gestão Escolar",
+            text: "English SAS - Sistema de Gestão Escolar com Questões de Inglês",
             heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
             spacing: { after: 200 },
@@ -207,7 +207,7 @@ export async function exportarRelatorioTurmaDocx(dados: {
         children: [
           // Cabeçalho
           new Paragraph({
-            text: "SAS English - Sistema de Gestão Escolar",
+            text: "English SAS - Sistema de Gestão Escolar com Questões de Inglês",
             heading: HeadingLevel.HEADING_1,
             alignment: AlignmentType.CENTER,
             spacing: { after: 200 },

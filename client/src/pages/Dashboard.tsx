@@ -19,7 +19,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-semibold">Dashboard</h1>
           <p className="text-muted-foreground mt-2">
-            Bem-vindo ao SAS English - Sistema de Gestão Escolar
+            Bem-vindo ao English SAS - Sistema de Gestão Escolar com Questões de Inglês
           </p>
         </div>
 

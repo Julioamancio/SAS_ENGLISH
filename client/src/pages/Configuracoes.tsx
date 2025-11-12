@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export default function Configuracoes() {
-  const [schoolName, setSchoolName] = useState("SAS English");
-  const [schoolLogo, setSchoolLogo] = useState("/logo.svg");
+  const [schoolName, setSchoolName] = useState("English SAS");
+  const [schoolLogo, setSchoolLogo] = useState("/logo.png");
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear().toString());
   const [etapa1Weight, setEtapa1Weight] = useState("30");
   const [etapa2Weight, setEtapa2Weight] = useState("35");
@@ -73,7 +73,7 @@ export default function Configuracoes() {
                 id="schoolLogo"
                 value={schoolLogo}
                 onChange={(e) => setSchoolLogo(e.target.value)}
-                placeholder="/logo.svg"
+                placeholder="/logo.png"
               />
               <p className="text-sm text-gray-500 mt-1">
                 Coloque o arquivo do logo em <code className="bg-gray-100 px-1 rounded">client/public/</code> e referencie aqui

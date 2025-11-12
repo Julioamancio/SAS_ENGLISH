@@ -12,6 +12,7 @@ import {
   ChevronRightIcon,
   MenuIcon,
   ChartBarIcon,
+  EnglishIcon,
 } from "./Icons";
 import { APP_TITLE } from "@/const";
 import { Button } from "./ui/button";
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { path: "/", label: "Dashboard", icon: HomeIcon },
   { path: "/turmas", label: "Turmas", icon: UsersIcon },
   { path: "/atividades", label: "Atividades", icon: BookOpenIcon },
+  { path: "/questoes-ingles", label: "Questões Inglês", icon: EnglishIcon },
   { path: "/feedbacks", label: "Feedbacks", icon: FileTextIcon },
   { path: "/estatisticas", label: "Estatísticas", icon: ChartBarIcon },
   { path: "/relatorios", label: "Relatórios", icon: FileTextIcon },

@@ -661,6 +661,267 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // Questões de Inglês
+  questoesIngles: router({
+    getAll: professorProcedure.query(async () => {
+      return await db.getAllQuestoesIngles();
+    }),
+    
+    getByProfessor: professorProcedure
+      .input(z.object({ professorId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getQuestoesInglesByProfessor(input.professorId);
+      }),
+    
+    getByTipo: professorProcedure
+      .input(z.object({ tipo: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getQuestoesInglesByTipo(input.tipo);
+      }),
+    
+    getByNivel: professorProcedure
+      .input(z.object({ nivel: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getQuestoesInglesByNivel(input.nivel);
+      }),
+    
+    getById: professorProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getQuestaoInglesById(input.id);
+      }),
+    
+    create: professorProcedure
+      .input(z.object({
+        titulo: z.string(),
+        tipo: z.enum(["Reading", "Listening", "Grammar", "Writing", "Vocabulary"]),
+        nivel: z.enum(["A1", "A2", "B1", "B2", "B2+"]),
+        enunciado: z.string(),
+        texto: z.string().optional(),
+        audioUrl: z.string().optional(),
+        imagemUrl: z.string().optional(),
+        alternativas: z.string(), // JSON array
+        respostaCorreta: z.number().min(0),
+        explicacao: z.string().optional(),
+        tempoEstimado: z.number().optional(),
+        tags: z.string().optional(),
+        professorId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const id = await db.createQuestaoIngles(input);
+          await db.logAuditoria({
+            userId: ctx.user.id,
+            userName: ctx.user.name || "Sistema",
+            acao: "criar_questao_ingles",
+            entidade: "questoesIngles",
+            entidadeId: id,
+            detalhes: JSON.stringify(input),
+          });
+          return { id };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+      }),
+    
+    update: professorProcedure
+      .input(z.object({
+        id: z.number(),
+        titulo: z.string().optional(),
+        tipo: z.enum(["Reading", "Listening", "Grammar", "Writing", "Vocabulary"]).optional(),
+        nivel: z.enum(["A1", "A2", "B1", "B2", "B2+"]).optional(),
+        enunciado: z.string().optional(),
+        texto: z.string().optional(),
+        audioUrl: z.string().optional(),
+        imagemUrl: z.string().optional(),
+        alternativas: z.string().optional(),
+        respostaCorreta: z.number().min(0).optional(),
+        explicacao: z.string().optional(),
+        tempoEstimado: z.number().optional(),
+        tags: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const { id, ...data } = input;
+          await db.updateQuestaoIngles(id, data);
+          await db.logAuditoria({
+            userId: ctx.user.id,
+            userName: ctx.user.name || "Sistema",
+            acao: "atualizar_questao_ingles",
+            entidade: "questoesIngles",
+            entidadeId: id,
+            detalhes: JSON.stringify(data),
+          });
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+      }),
+    
+    delete: professorProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input, ctx }) => {
+        await db.deleteQuestaoIngles(input.id);
+        await db.logAuditoria({
+          userId: ctx.user.id,
+          userName: ctx.user.name || "Sistema",
+          acao: "excluir_questao_ingles",
+          entidade: "questoesIngles",
+          entidadeId: input.id,
+          detalhes: "",
+        });
+        return { success: true };
+      }),
+  }),
+
+  // Bancos de Questões
+  bancosQuestoes: router({
+    getAll: professorProcedure.query(async () => {
+      return await db.getAllBancosQuestoes();
+    }),
+    
+    getByProfessor: professorProcedure
+      .input(z.object({ professorId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getBancosQuestoesByProfessor(input.professorId);
+      }),
+    
+    getById: professorProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getBancoQuestoesById(input.id);
+      }),
+    
+    create: professorProcedure
+      .input(z.object({
+        nome: z.string(),
+        descricao: z.string().optional(),
+        professorId: z.number(),
+        turmaId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const id = await db.createBancoQuestoes(input);
+          await db.logAuditoria({
+            userId: ctx.user.id,
+            userName: ctx.user.name || "Sistema",
+            acao: "criar_banco_questoes",
+            entidade: "bancosQuestoes",
+            entidadeId: id,
+            detalhes: JSON.stringify(input),
+          });
+          return { id };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+      }),
+    
+    update: professorProcedure
+      .input(z.object({
+        id: z.number(),
+        nome: z.string().optional(),
+        descricao: z.string().optional(),
+        turmaId: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const { id, ...data } = input;
+          await db.updateBancoQuestoes(id, data);
+          await db.logAuditoria({
+            userId: ctx.user.id,
+            userName: ctx.user.name || "Sistema",
+            acao: "atualizar_banco_questoes",
+            entidade: "bancosQuestoes",
+            entidadeId: id,
+            detalhes: JSON.stringify(data),
+          });
+          return { success: true };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+      }),
+    
+    addQuestao: professorProcedure
+      .input(z.object({
+        bancoId: z.number(),
+        questaoId: z.number(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        await db.addQuestaoToBanco(input.bancoId, input.questaoId);
+        await db.logAuditoria({
+          userId: ctx.user.id,
+          userName: ctx.user.name || "Sistema",
+          acao: "adicionar_questao_banco",
+          entidade: "bancoQuestoesRelacao",
+          detalhes: JSON.stringify(input),
+        });
+        return { success: true };
+      }),
+    
+    getQuestoes: professorProcedure
+      .input(z.object({ bancoId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getQuestoesFromBanco(input.bancoId);
+      }),
+  }),
+
+  // Respostas dos Alunos
+  respostasAlunos: router({
+    create: protectedProcedure
+      .input(z.object({
+        alunoId: z.number(),
+        questaoId: z.number(),
+        atividadeId: z.number(),
+        respostaSelecionada: z.number().optional(),
+        respostaTexto: z.string().optional(),
+        correta: z.boolean(),
+        tempoResposta: z.number().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        try {
+          const id = await db.createRespostaAluno(input);
+          await db.logAuditoria({
+            userId: ctx.user.id,
+            userName: ctx.user.name || "Sistema",
+            acao: "criar_resposta_aluno",
+            entidade: "respostasAlunos",
+            entidadeId: id,
+            detalhes: JSON.stringify(input),
+          });
+          return { id };
+        } catch (error: any) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: error.message,
+          });
+        }
+      }),
+    
+    getByAluno: protectedProcedure
+      .input(z.object({ alunoId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getRespostasByAluno(input.alunoId);
+      }),
+    
+    getByAtividade: professorProcedure
+      .input(z.object({ atividadeId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getRespostasByAtividade(input.atividadeId);
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

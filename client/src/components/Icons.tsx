@@ -30,6 +30,30 @@ export function HomeIcon({ className = "", size = 24, "aria-label": ariaLabel }:
   );
 }
 
+export function EnglishIcon({ className = "", size = 24, "aria-label": ariaLabel }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-label={ariaLabel || "Questões de Inglês"}
+      role="img"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="M12 11.17l-2.5-1.5L12 8l2.5 1.75L12 11.17z" />
+      <path d="M7.5 4.5L12 2l4.5 2.5" />
+      <path d="M16.5 4.5L12 7l-4.5-2.5" />
+      <circle cx="12" cy="16" r="1" />
+    </svg>
+  );
+}
+
 export function UsersIcon({ className = "", size = 24, "aria-label": ariaLabel }: IconProps) {
   return (
     <svg

@@ -1,0 +1,51 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Círculo principal com azul royal -->
+  <circle cx="64" cy="64" r="60" fill="#1B69D9"/>
+  <circle cx="64" cy="64" r="56" fill="none" stroke="#0E2A4A" stroke-width="3"/>
+  <circle cx="64" cy="64" r="52" fill="none" stroke="#102A43" stroke-width="1"/>
+  
+  <!-- ENGLÎSH com letras brancas em blocos rosa/vermelho irregulares -->
+  <!-- E com bloco irregular -->
+  <path d="M18,22 Q20,20 22,22 L22,38 Q20,40 18,38 Z" fill="#FF3E6C"/>
+  <text x="20" y="35" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">E</text>
+  <text x="20" y="35" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">E</text>
+  
+  <!-- N com bloco irregular -->
+  <path d="M34,20 Q36,18 38,20 L38,36 Q36,38 34,36 Z" fill="#F04C6A"/>
+  <text x="36" y="33" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">N</text>
+  <text x="36" y="33" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">N</text>
+  
+  <!-- G com bloco irregular -->
+  <path d="M50,24 Q52,22 54,24 L54,40 Q52,42 50,40 Z" fill="#FF3E6C"/>
+  <text x="52" y="37" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">G</text>
+  <text x="52" y="37" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">G</text>
+  
+  <!-- L com bloco irregular -->
+  <path d="M66,22 Q68,20 70,22 L70,38 Q68,40 66,38 Z" fill="#F04C6A"/>
+  <text x="68" y="35" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">L</text>
+  <text x="68" y="35" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">L</text>
+  
+  <!-- Î com bloco irregular e acento circunflexo -->
+  <path d="M82,20 Q84,18 86,20 L86,36 Q84,38 82,36 Z" fill="#FF3E6C"/>
+  <text x="84" y="33" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">Î</text>
+  <text x="84" y="33" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">Î</text>
+  <!-- Acento circunflexo do Î em navy -->
+  <path d="M81,14 L84,11 L87,14" stroke="#0E2A4A" stroke-width="2" fill="none"/>
+  
+  <!-- S com bloco irregular -->
+  <path d="M40,42 Q42,40 44,42 L44,58 Q42,60 40,58 Z" fill="#F04C6A"/>
+  <text x="42" y="55" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">S</text>
+  <text x="42" y="55" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">S</text>
+  
+  <!-- H com bloco irregular -->
+  <path d="M56,44 Q58,42 60,44 L60,60 Q58,62 56,60 Z" fill="#FF3E6C"/>
+  <text x="58" y="57" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="white" text-anchor="middle">H</text>
+  <text x="58" y="57" font-family="Arial Black, sans-serif" font-size="16" font-weight="900" fill="#0E2A4A" text-anchor="middle" transform="translate(1,1)" opacity="0.4">H</text>
+  
+  <!-- SAS em fonte serif branca com sombra navy deslocada -->
+  <text x="64" y="88" font-family="Times New Roman, serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle" letter-spacing="2">SAS</text>
+  <text x="64" y="88" font-family="Times New Roman, serif" font-size="20" font-weight="bold" fill="#0E2A4A" text-anchor="middle" transform="translate(3,3)" opacity="0.6">SAS</text>
+  
+  <!-- Curva decorativa branca suave -->
+  <path d="M45 50 Q55 54 65 50" stroke="white" stroke-width="2.5" fill="none" opacity="0.8"/>
+</svg>

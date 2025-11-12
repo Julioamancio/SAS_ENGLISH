@@ -1,0 +1,990 @@
+{% extends "base.html" %}
+
+{% block title %}Questões de Inglês - English SAS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Banco de Questões de Inglês</h1>
+    <div class="header-actions">
+        <button class="btn btn-secondary" onclick="showModal('import-modal')">
+            <span class="icon">📁</span>
+            Importar XLSX
+        </button>
+        <button class="btn btn-secondary" onclick="exportQuestions()">
+            <span class="icon">📊</span>
+            Exportar XLSX
+        </button>
+        <button class="btn btn-primary" onclick="showModal('questao-modal')">
+            <span class="icon">+</span>
+            Nova Questão
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2>Filtros de Questões</h2>
+        <div class="filters">
+            <select id="nivel-filter" onchange="filterQuestions()">
+                <option value="">Todos os Níveis</option>
+                <option value="A1">A1 - Beginner</option>
+                <option value="A2">A2 - Elementary</option>
+                <option value="B1">B1 - Intermediate</option>
+                <option value="B2">B2 - Upper Intermediate</option>
+                <option value="B2+">B2+ - Advanced</option>
+            </select>
+            <select id="tipo-filter" onchange="filterQuestions()">
+                <option value="">Todos os Tipos</option>
+                <option value="multiple_choice">Múltipla Escolha</option>
+                <option value="true_false">Verdadeiro/Falso</option>
+                <option value="fill_blank">Preencher Lacuna</option>
+                <option value="matching">Correspondência</option>
+            </select>
+            <select id="habilidade-filter" onchange="filterQuestions()">
+                <option value="">Todas as Habilidades</option>
+                <option value="grammar">Gramática</option>
+                <option value="vocabulary">Vocabulário</option>
+                <option value="reading">Leitura</option>
+                <option value="listening">Audição</option>
+                <option value="writing">Escrita</option>
+                <option value="speaking">Fala</option>
+            </select>
+            <input type="text" id="search-filter" placeholder="Buscar questões..." 
+                   oninput="filterQuestions()" style="flex: 1;">
+        </div>
+    </div>
+    <div class="table-container">
+        <table id="questoes-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pergunta</th>
+                    <th>Nível</th>
+                    <th>Tipo</th>
+                    <th>Habilidade</th>
+                    <th>Resposta</th>
+                    <th>Pontos</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="questoes-tbody">
+                <!-- Questões will be loaded here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Questão Modal -->
+<div id="questao-modal" class="modal">
+    <div class="modal-content large">
+        <div class="modal-header">
+            <h3 id="questao-modal-title">Nova Questão de Inglês</h3>
+            <button class="modal-close" onclick="hideModal('questao-modal')">&times;</button>
+        </div>
+        <form id="questao-form" onsubmit="saveQuestao(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="questao-nivel">Nível *</label>
+                    <select id="questao-nivel" name="nivel" required onchange="updateQuestionTemplate()">
+                        <option value="">Selecione o nível</option>
+                        <option value="A1">A1 - Beginner</option>
+                        <option value="A2">A2 - Elementary</option>
+                        <option value="B1">B1 - Intermediate</option>
+                        <option value="B2">B2 - Upper Intermediate</option>
+                        <option value="B2+">B2+ - Advanced</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questao-tipo">Tipo *</label>
+                    <select id="questao-tipo" name="tipo" required onchange="updateQuestionTemplate()">
+                        <option value="">Selecione o tipo</option>
+                        <option value="multiple_choice">Múltipla Escolha</option>
+                        <option value="true_false">Verdadeiro/Falso</option>
+                        <option value="fill_blank">Preencher Lacuna</option>
+                        <option value="matching">Correspondência</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questao-habilidade">Habilidade *</label>
+                    <select id="questao-habilidade" name="habilidade" required>
+                        <option value="">Selecione a habilidade</option>
+                        <option value="grammar">Gramática</option>
+                        <option value="vocabulary">Vocabulário</option>
+                        <option value="reading">Leitura</option>
+                        <option value="listening">Audição</option>
+                        <option value="writing">Escrita</option>
+                        <option value="speaking">Fala</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="questao-pontos">Pontos *</label>
+                    <input type="number" id="questao-pontos" name="pontos" required min="1" max="10" value="1">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="questao-pergunta">Pergunta *</label>
+                <textarea id="questao-pergunta" name="pergunta" required rows="3" 
+                          placeholder="Digite a pergunta em inglês..." 
+                          oninput="updateQuestionPreview()"></textarea>
+                <div class="character-count">
+                    <span id="pergunta-count">0</span> caracteres
+                </div>
+            </div>
+            
+            <div id="questao-opcoes-container" class="form-group" style="display: none;">
+                <label>Opções de Resposta *</label>
+                <div id="opcoes-list">
+                    <div class="opcao-item">
+                        <input type="text" name="opcao[]" placeholder="Opção A" required>
+                        <label>
+                            <input type="radio" name="resposta_correta" value="0" required>
+                            Correta
+                        </label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="text" name="opcao[]" placeholder="Opção B" required>
+                        <label>
+                            <input type="radio" name="resposta_correta" value="1" required>
+                            Correta
+                        </label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="text" name="opcao[]" placeholder="Opção C" required>
+                        <label>
+                            <input type="radio" name="resposta_correta" value="2" required>
+                            Correta
+                        </label>
+                    </div>
+                    <div class="opcao-item">
+                        <input type="text" name="opcao[]" placeholder="Opção D" required>
+                        <label>
+                            <input type="radio" name="resposta_correta" value="3" required>
+                            Correta
+                        </label>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addOpcao()">
+                    <span class="icon">+</span> Adicionar Opção
+                </button>
+            </div>
+            
+            <div id="questao-verdadeiro-falso" class="form-group" style="display: none;">
+                <label>Resposta Correta *</label>
+                <div class="radio-group">
+                    <label>
+                        <input type="radio" name="resposta_boolean" value="true" required>
+                        Verdadeiro (True)
+                    </label>
+                    <label>
+                        <input type="radio" name="resposta_boolean" value="false" required>
+                        Falso (False)
+                    </label>
+                </div>
+            </div>
+            
+            <div id="questao-fill-blank" class="form-group" style="display: none;">
+                <label for="questao-resposta_texto">Resposta Correta *</label>
+                <input type="text" id="questao-resposta_texto" name="resposta_texto" 
+                       placeholder="Digite a resposta correta...">
+            </div>
+            
+            <div id="questao-matching" class="form-group" style="display: none;">
+                <label>Pares de Correspondência *</label>
+                <div id="matching-pairs">
+                    <div class="matching-pair">
+                        <input type="text" name="matching_esquerda[]" placeholder="Item da esquerda" required>
+                        <input type="text" name="matching_direita[]" placeholder="Item da direita" required>
+                    </div>
+                    <div class="matching-pair">
+                        <input type="text" name="matching_esquerda[]" placeholder="Item da esquerda" required>
+                        <input type="text" name="matching_direita[]" placeholder="Item da direita" required>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="addMatchingPair()">
+                    <span class="icon">+</span> Adicionar Par
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label for="questao-explicacao">Explicação da Resposta</label>
+                <textarea id="questao-explicacao" name="explicacao" rows="3" 
+                          placeholder="Explicação opcional da resposta correta..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="questao-dicas">Dicas</label>
+                <textarea id="questao-dicas" name="dicas" rows="2" 
+                          placeholder="Dicas opcionais para resolver a questão..."></textarea>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('questao-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div id="import-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Importar Questões (XLSX)</h3>
+            <button class="modal-close" onclick="hideModal('import-modal')">&times;</button>
+        </div>
+        <form id="import-form" onsubmit="importQuestions(event)">
+            <div class="form-group">
+                <label for="import-file">Arquivo XLSX *</label>
+                <input type="file" id="import-file" name="file" accept=".xlsx" required>
+                <small>O arquivo deve conter as colunas: pergunta, nivel, tipo, habilidade, resposta_correta, opcoes, explicacao, dicas, pontos</small>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="import-sobrescrever" name="sobrescrever">
+                    Sobrescrever questões existentes com mesmo ID
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('import-modal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Importar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div id="preview-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Pré-visualização da Questão</h3>
+            <button class="modal-close" onclick="hideModal('preview-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="questao-preview-content">
+                <!-- Preview content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentEditingId = null;
+
+// Load questions on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadQuestoes();
+    
+    // Character count for pergunta
+    document.getElementById('questao-pergunta').addEventListener('input', function() {
+        document.getElementById('pergunta-count').textContent = this.value.length;
+    });
+});
+
+async function loadQuestoes() {
+    try {
+        const response = await apiCall('/api/questoes-ingles');
+        const questoes = response.questoes || [];
+        
+        const tbody = document.getElementById('questoes-tbody');
+        tbody.innerHTML = '';
+        
+        questoes.forEach(questao => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${questao.id}</td>
+                <td>
+                    <div class="questao-text-preview">
+                        ${escapeHtml(questao.pergunta.substring(0, 100))}
+                        ${questao.pergunta.length > 100 ? '...' : ''}
+                    </div>
+                </td>
+                <td><span class="nivel-badge nivel-${questao.nivel.toLowerCase()}">${questao.nivel}</span></td>
+                <td>${getTipoLabel(questao.tipo)}</td>
+                <td>${getHabilidadeLabel(questao.habilidade)}</td>
+                <td>
+                    <div class="resposta-preview">
+                        ${escapeHtml(getRespostaPreview(questao))}
+                    </div>
+                </td>
+                <td>${questao.pontos}</td>
+                <td>
+                    <span class="status ${questao.status}">
+                        ${questao.status === 'ativa' ? 'Ativa' : 'Inativa'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="previewQuestao(${questao.id})" 
+                            title="Visualizar">
+                        <span class="icon">👁️</span>
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="editQuestao(${questao.id})" 
+                            title="Editar">
+                        <span class="icon">✏️</span>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteQuestao(${questao.id})" 
+                            title="Excluir">
+                        <span class="icon">🗑️</span>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    } catch (error) {
+        showNotification('Erro ao carregar questões: ' + error.message, 'error');
+    }
+}
+
+function getTipoLabel(tipo) {
+    const labels = {
+        'multiple_choice': 'Múltipla Escolha',
+        'true_false': 'Verdadeiro/Falso',
+        'fill_blank': 'Preencher Lacuna',
+        'matching': 'Correspondência'
+    };
+    return labels[tipo] || tipo;
+}
+
+function getHabilidadeLabel(habilidade) {
+    const labels = {
+        'grammar': 'Gramática',
+        'vocabulary': 'Vocabulário',
+        'reading': 'Leitura',
+        'listening': 'Audição',
+        'writing': 'Escrita',
+        'speaking': 'Fala'
+    };
+    return labels[habilidade] || habilidade;
+}
+
+function getRespostaPreview(questao) {
+    switch (questao.tipo) {
+        case 'multiple_choice':
+            return `Opção ${String.fromCharCode(65 + parseInt(questao.resposta_correta))}`;
+        case 'true_false':
+            return questao.resposta_boolean ? 'Verdadeiro' : 'Falso';
+        case 'fill_blank':
+            return questao.resposta_texto || '';
+        case 'matching':
+            return `${questao.matching_pares?.length || 0} pares`;
+        default:
+            return '';
+    }
+}
+
+function showModal(modalId) {
+    document.getElementById(modalId).style.display = 'flex';
+}
+
+function hideModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+    
+    // Clear forms
+    const form = document.querySelector(`#${modalId} form`);
+    if (form) form.reset();
+    
+    // Reset question template
+    if (modalId === 'questao-modal') {
+        resetQuestionTemplate();
+    }
+}
+
+function resetQuestionTemplate() {
+    document.getElementById('questao-opcoes-container').style.display = 'none';
+    document.getElementById('questao-verdadeiro-falso').style.display = 'none';
+    document.getElementById('questao-fill-blank').style.display = 'none';
+    document.getElementById('questao-matching').style.display = 'none';
+    document.getElementById('pergunta-count').textContent = '0';
+}
+
+function updateQuestionTemplate() {
+    const nivel = document.getElementById('questao-nivel').value;
+    const tipo = document.getElementById('questao-tipo').value;
+    
+    resetQuestionTemplate();
+    
+    if (!nivel || !tipo) return;
+    
+    // Show appropriate fields based on question type
+    switch (tipo) {
+        case 'multiple_choice':
+            document.getElementById('questao-opcoes-container').style.display = 'block';
+            break;
+        case 'true_false':
+            document.getElementById('questao-verdadeiro-falso').style.display = 'block';
+            break;
+        case 'fill_blank':
+            document.getElementById('questao-fill-blank').style.display = 'block';
+            break;
+        case 'matching':
+            document.getElementById('questao-matching').style.display = 'block';
+            break;
+    }
+    
+    // Auto-generate question based on level and type if empty
+    const perguntaField = document.getElementById('questao-pergunta');
+    if (!perguntaField.value) {
+        perguntaField.value = generateQuestionTemplate(nivel, tipo);
+        perguntaField.dispatchEvent(new Event('input'));
+    }
+}
+
+function generateQuestionTemplate(nivel, tipo) {
+    const templates = {
+        'A1': {
+            'multiple_choice': 'Choose the correct word: I ___ a student.',
+            'true_false': 'I am a student. (True/False)',
+            'fill_blank': 'Complete: I ___ a student.',
+            'matching': 'Match the words with their meanings.'
+        },
+        'A2': {
+            'multiple_choice': 'Choose the correct form: She ___ to school every day.',
+            'true_false': 'She goes to school every day. (True/False)',
+            'fill_blank': 'Complete: She ___ to school every day.',
+            'matching': 'Match the phrases with their meanings.'
+        },
+        'B1': {
+            'multiple_choice': 'Choose the correct tense: By this time next year, I ___ my degree.',
+            'true_false': 'I have been studying English for five years. (True/False)',
+            'fill_blank': 'Complete: If I ___ you, I would accept the offer.',
+            'matching': 'Match the idioms with their meanings.'
+        },
+        'B2': {
+            'multiple_choice': 'Choose the best word: The situation was ___ complex.',
+            'true_false': 'Having completed the project, the team celebrated their success. (True/False)',
+            'fill_blank': 'Complete: Not only ___ she speak French, but she also speaks German.',
+            'matching': 'Match the advanced vocabulary with their definitions.'
+        },
+        'B2+': {
+            'multiple_choice': 'Choose the most appropriate phrase: The data suggests that ___ .',
+            'true_false': 'The proliferation of social media has fundamentally altered interpersonal communication. (True/False)',
+            'fill_blank': 'Complete: ___ the increasing complexity of modern society, traditional approaches may prove insufficient.',
+            'matching': 'Match the academic terms with their contextual meanings.'
+        }
+    };
+    
+    return templates[nivel]?.[tipo] || 'Enter your question here.';
+}
+
+function addOpcao() {
+    const opcoesList = document.getElementById('opcoes-list');
+    const index = opcoesList.children.length;
+    
+    const opcaoItem = document.createElement('div');
+    opcaoItem.className = 'opcao-item';
+    opcaoItem.innerHTML = `
+        <input type="text" name="opcao[]" placeholder="Opção ${String.fromCharCode(65 + index)}" required>
+        <label>
+            <input type="radio" name="resposta_correta" value="${index}" required>
+            Correta
+        </label>
+        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+            <span class="icon">×</span>
+        </button>
+    `;
+    
+    opcoesList.appendChild(opcaoItem);
+}
+
+function addMatchingPair() {
+    const matchingPairs = document.getElementById('matching-pairs');
+    
+    const pairDiv = document.createElement('div');
+    pairDiv.className = 'matching-pair';
+    pairDiv.innerHTML = `
+        <input type="text" name="matching_esquerda[]" placeholder="Item da esquerda" required>
+        <input type="text" name="matching_direita[]" placeholder="Item da direita" required>
+        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+            <span class="icon">×</span>
+        </button>
+    `;
+    
+    matchingPairs.appendChild(pairDiv);
+}
+
+async function saveQuestao(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const questaoData = Object.fromEntries(formData);
+    
+    // Process different question types
+    const tipo = questaoData.tipo;
+    
+    switch (tipo) {
+        case 'multiple_choice':
+            questaoData.opcoes = formData.getAll('opcao[]');
+            questaoData.resposta_correta = parseInt(questaoData.resposta_correta);
+            break;
+        case 'true_false':
+            questaoData.resposta_boolean = questaoData.resposta_boolean === 'true';
+            break;
+        case 'matching':
+            const esquerda = formData.getAll('matching_esquerda[]');
+            const direita = formData.getAll('matching_direita[]');
+            questaoData.matching_pares = esquerda.map((esq, i) => ({
+                esquerda: esq,
+                direita: direita[i]
+            }));
+            break;
+    }
+    
+    // Convert pontos to number
+    questaoData.pontos = parseInt(questaoData.pontos);
+    
+    try {
+        const method = currentEditingId ? 'PUT' : 'POST';
+        const url = currentEditingId ? `/api/questoes-ingles/${currentEditingId}` : '/api/questoes-ingles';
+        
+        await apiCall(url, {
+            method: method,
+            body: JSON.stringify(questaoData)
+        });
+        
+        showNotification(currentEditingId ? 'Questão atualizada com sucesso!' : 'Questão criada com sucesso!', 'success');
+        hideModal('questao-modal');
+        loadQuestoes();
+        currentEditingId = null;
+    } catch (error) {
+        showNotification('Erro ao salvar questão: ' + error.message, 'error');
+    }
+}
+
+async function editQuestao(id) {
+    try {
+        const response = await apiCall(`/api/questoes-ingles/${id}`);
+        const questao = response.questao;
+        
+        document.getElementById('questao-modal-title').textContent = 'Editar Questão';
+        document.getElementById('questao-nivel').value = questao.nivel;
+        document.getElementById('questao-tipo').value = questao.tipo;
+        document.getElementById('questao-habilidade').value = questao.habilidade;
+        document.getElementById('questao-pontos').value = questao.pontos;
+        document.getElementById('questao-pergunta').value = questao.pergunta;
+        document.getElementById('questao-explicacao').value = questao.explicacao || '';
+        document.getElementById('questao-dicas').value = questao.dicas || '';
+        
+        // Update template to show correct fields
+        updateQuestionTemplate();
+        
+        // Fill in specific data based on question type
+        switch (questao.tipo) {
+            case 'multiple_choice':
+                // Clear existing options and add saved ones
+                const opcoesList = document.getElementById('opcoes-list');
+                opcoesList.innerHTML = '';
+                
+                questao.opcoes.forEach((opcao, index) => {
+                    const opcaoItem = document.createElement('div');
+                    opcaoItem.className = 'opcao-item';
+                    opcaoItem.innerHTML = `
+                        <input type="text" name="opcao[]" value="${escapeHtml(opcao)}" placeholder="Opção ${String.fromCharCode(65 + index)}" required>
+                        <label>
+                            <input type="radio" name="resposta_correta" value="${index}" ${index === questao.resposta_correta ? 'checked' : ''} required>
+                            Correta
+                        </label>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+                            <span class="icon">×</span>
+                        </button>
+                    `;
+                    opcoesList.appendChild(opcaoItem);
+                });
+                break;
+                
+            case 'true_false':
+                document.querySelector(`input[name="resposta_boolean"][value="${questao.resposta_boolean}"]`).checked = true;
+                break;
+                
+            case 'fill_blank':
+                document.getElementById('questao-resposta_texto').value = questao.resposta_texto || '';
+                break;
+                
+            case 'matching':
+                // Clear existing pairs and add saved ones
+                const matchingPairs = document.getElementById('matching-pairs');
+                matchingPairs.innerHTML = '';
+                
+                questao.matching_pares.forEach(par => {
+                    const pairDiv = document.createElement('div');
+                    pairDiv.className = 'matching-pair';
+                    pairDiv.innerHTML = `
+                        <input type="text" name="matching_esquerda[]" value="${escapeHtml(par.esquerda)}" placeholder="Item da esquerda" required>
+                        <input type="text" name="matching_direita[]" value="${escapeHtml(par.direita)}" placeholder="Item da direita" required>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">
+                            <span class="icon">×</span>
+                        </button>
+                    `;
+                    matchingPairs.appendChild(pairDiv);
+                });
+                break;
+        }
+        
+        // Update character count
+        document.getElementById('pergunta-count').textContent = questao.pergunta.length;
+        
+        currentEditingId = id;
+        showModal('questao-modal');
+    } catch (error) {
+        showNotification('Erro ao carregar questão: ' + error.message, 'error');
+    }
+}
+
+async function deleteQuestao(id) {
+    if (!confirm('Tem certeza que deseja excluir esta questão?')) return;
+    
+    try {
+        await apiCall(`/api/questoes-ingles/${id}`, {
+            method: 'DELETE'
+        });
+        
+        showNotification('Questão excluída com sucesso!', 'success');
+        loadQuestoes();
+    } catch (error) {
+        showNotification('Erro ao excluir questão: ' + error.message, 'error');
+    }
+}
+
+async function previewQuestao(id) {
+    try {
+        const response = await apiCall(`/api/questoes-ingles/${id}`);
+        const questao = response.questao;
+        
+        const previewContent = document.getElementById('questao-preview-content');
+        
+        let html = `
+            <div class="questao-preview">
+                <div class="questao-header">
+                    <span class="nivel-badge nivel-${questao.nivel.toLowerCase()}">${questao.nivel}</span>
+                    <span class="tipo-badge">${getTipoLabel(questao.tipo)}</span>
+                    <span class="habilidade-badge">${getHabilidadeLabel(questao.habilidade)}</span>
+                    <span class="pontos-badge">${questao.pontos} pontos</span>
+                </div>
+                <div class="questao-pergunta">
+                    <strong>Pergunta:</strong><br>
+                    ${escapeHtml(questao.pergunta)}
+                </div>
+        `;
+        
+        // Add answer based on question type
+        switch (questao.tipo) {
+            case 'multiple_choice':
+                html += '<div class="questao-opcoes"><strong>Opções:</strong><br>';
+                questao.opcoes.forEach((opcao, index) => {
+                    const isCorrect = index === questao.resposta_correta;
+                    html += `<div class="opcao ${isCorrect ? 'correta' : ''}">
+                        <strong>${String.fromCharCode(65 + index)}:</strong> ${escapeHtml(opcao)}
+                        ${isCorrect ? ' ✓' : ''}
+                    </div>`;
+                });
+                html += '</div>';
+                break;
+                
+            case 'true_false':
+                html += `<div class="questao-resposta">
+                    <strong>Resposta:</strong> ${questao.resposta_boolean ? 'Verdadeiro (True)' : 'Falso (False)'}
+                </div>`;
+                break;
+                
+            case 'fill_blank':
+                html += `<div class="questao-resposta">
+                    <strong>Resposta:</strong> ${escapeHtml(questao.resposta_texto || '')}
+                </div>`;
+                break;
+                
+            case 'matching':
+                html += '<div class="questao-matching"><strong>Pares de Correspondência:</strong><br>';
+                questao.matching_pares.forEach((par, index) => {
+                    html += `<div class="matching-par">
+                        <strong>${index + 1}:</strong> ${escapeHtml(par.esquerda)} ↔ ${escapeHtml(par.direita)}
+                    </div>`;
+                });
+                html += '</div>';
+                break;
+        }
+        
+        // Add explanation and tips if available
+        if (questao.explicacao) {
+            html += `<div class="questao-explicacao">
+                <strong>Explicação:</strong><br>
+                ${escapeHtml(questao.explicacao)}
+            </div>`;
+        }
+        
+        if (questao.dicas) {
+            html += `<div class="questao-dicas">
+                <strong>Dicas:</strong><br>
+                ${escapeHtml(questao.dicas)}
+            </div>`;
+        }
+        
+        html += '</div>';
+        
+        previewContent.innerHTML = html;
+        showModal('preview-modal');
+    } catch (error) {
+        showNotification('Erro ao visualizar questão: ' + error.message, 'error');
+    }
+}
+
+async function importQuestions(event) {
+    event.preventDefault();
+    
+    const fileInput = document.getElementById('import-file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        showNotification('Por favor, selecione um arquivo', 'error');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('sobrescrever', document.getElementById('import-sobrescrever').checked);
+    
+    try {
+        const response = await fetch('/api/questoes-ingles/import', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao importar questões');
+        }
+        
+        const result = await response.json();
+        showNotification(`Questões importadas com sucesso! ${result.importadas} questões importadas.`, 'success');
+        hideModal('import-modal');
+        loadQuestoes();
+    } catch (error) {
+        showNotification('Erro ao importar questões: ' + error.message, 'error');
+    }
+}
+
+async function exportQuestions() {
+    try {
+        const response = await fetch('/api/questoes-ingles/export', {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('token')
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao exportar questões');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'questoes_ingles_' + new Date().toISOString().split('T')[0] + '.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        showNotification('Questões exportadas com sucesso!', 'success');
+    } catch (error) {
+        showNotification('Erro ao exportar questões: ' + error.message, 'error');
+    }
+}
+
+function filterQuestions() {
+    const nivelFilter = document.getElementById('nivel-filter').value;
+    const tipoFilter = document.getElementById('tipo-filter').value;
+    const habilidadeFilter = document.getElementById('habilidade-filter').value;
+    const searchFilter = document.getElementById('search-filter').value.toLowerCase();
+    
+    const table = document.getElementById('questoes-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cells = row.getElementsByTagName('td');
+        
+        const nivel = cells[2].textContent.trim();
+        const tipo = cells[3].textContent.trim();
+        const habilidade = cells[4].textContent.trim();
+        const pergunta = cells[1].textContent.toLowerCase();
+        
+        let showRow = true;
+        
+        if (nivelFilter && nivel !== nivelFilter) showRow = false;
+        if (tipoFilter && getTipoLabel(tipoFilter) !== tipo) showRow = false;
+        if (habilidadeFilter && getHabilidadeLabel(habilidadeFilter) !== habilidade) showRow = false;
+        if (searchFilter && !pergunta.includes(searchFilter)) showRow = false;
+        
+        row.style.display = showRow ? '' : 'none';
+    }
+}
+</script>
+
+<style>
+/* Question-specific styles */
+.nivel-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    color: white;
+}
+
+.nivel-a1 { background-color: #28a745; }
+.nivel-a2 { background-color: #17a2b8; }
+.nivel-b1 { background-color: #ffc107; color: #212529; }
+.nivel-b2 { background-color: #fd7e14; }
+.nivel-b2\+ { background-color: #dc3545; }
+
+.tipo-badge, .habilidade-badge, .pontos-badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75em;
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.questao-text-preview {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resposta-preview {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Question form styles */
+.form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.opcao-item, .matching-pair {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.opcao-item input[type="text"], .matching-pair input[type="text"] {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.character-count {
+    text-align: right;
+    font-size: 0.8em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* Question preview styles */
+.questao-preview {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.questao-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.questao-pergunta, .questao-resposta, .questao-explicacao, .questao-dicas {
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.questao-opcoes .opcao {
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid #dee2e6;
+}
+
+.questao-opcoes .opcao.correta {
+    background-color: #d4edda;
+    border-color: #28a745;
+}
+
+.matching-par {
+    padding: 8px;
+    margin: 5px 0;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.search-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    background-color: white;
+}
+
+.search-result-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .questao-header {
+        flex-direction: column;
+    }
+    
+    .questao-text-preview {
+        max-width: 200px;
+    }
+}
+</style>
+{% endblock %}

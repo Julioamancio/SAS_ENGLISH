@@ -38,6 +38,20 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx"`,
         `src="/src/main.tsx?v=${nanoid()}"`
       );
+      
+      // Replace environment variables
+      template = template.replace(/%VITE_APP_TITLE%/g, process.env.VITE_APP_TITLE || 'English SAS');
+      template = template.replace(/%VITE_APP_LOGO%/g, process.env.VITE_APP_LOGO || '/logo.png');
+      
+      // Handle analytics script - only include if both endpoint and website ID are configured
+      const analyticsEndpoint = process.env.VITE_ANALYTICS_ENDPOINT;
+      const analyticsWebsiteId = process.env.VITE_ANALYTICS_WEBSITE_ID;
+      let analyticsScript = '';
+      if (analyticsEndpoint && analyticsWebsiteId) {
+        analyticsScript = `<script defer src="${analyticsEndpoint}/umami" data-website-id="${analyticsWebsiteId}"></script>`;
+      }
+      template = template.replace(/%VITE_ANALYTICS_SCRIPT%/g, analyticsScript);
+      
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
